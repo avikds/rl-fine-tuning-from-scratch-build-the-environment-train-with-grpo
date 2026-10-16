@@ -859,6 +859,85 @@ def run_grpo(base, steps, cfg, seed=0, strict=True):
         "history": history,
     }
 
-# Step 24 - rlvr_experiment (not yet solved)
-# TODO: implement
+# Step 24 - rlvr_experiment
+def rlvr_experiment(seed=0, sft_steps=600, rl_steps=300, hack_steps=50, cfg=None, k=8, window=50):
+    if cfg is None:
+        cfg = {
+            "batch": 16,
+            "group": 8,
+            "lr": 3e-4,
+            "beta": 0.02,
+            "clip_eps": 0.2,
+            "normalize_std": True,
+            "epochs": 1,
+        }
+
+    if window <= 0:
+        raise ValueError("window must be a positive integer")
+
+    # Build the base policy and evaluate it on held-out tasks.
+    base = build_base(seed=seed, sft_steps=sft_steps)
+    base_eval = evaluate(
+        base["policy"],
+        base["held"],
+        k,
+        torch.Generator().manual_seed(seed),
+    )
+
+    # Run GRPO with the strict verifier.
+    strict_run = run_grpo(
+        base, rl_steps, cfg, seed=seed, strict=True
+    )
+    strict_eval = evaluate(
+        strict_run["policy"],
+        base["held"],
+        k,
+        torch.Generator().manual_seed(seed),
+    )
+
+    # Summarize strict-training history over consecutive windows.
+    history = strict_run["history"]
+    curve = []
+
+    for start in range(0, len(history), window):
+        chunk = history[start:start + window]
+        curve.append({
+            "step": chunk[-1]["step"] + 1,
+            "reward": float(
+                sum(record["reward"] for record in chunk) / len(chunk)
+            ),
+            "kl": float(
+                sum(record["kl"] for record in chunk) / len(chunk)
+            ),
+        })
+
+    # Run an independent experiment with the fail-open verifier.
+    hack_run = run_grpo(
+        base, hack_steps, cfg, seed=seed, strict=False
+    )
+    hack_eval = evaluate(
+        hack_run["policy"],
+        base["held"],
+        k,
+        torch.Generator().manual_seed(seed),
+    )
+
+    return {
+        "base": {
+            "eval": base_eval,
+            "sft_loss": float(base["sft_loss"]),
+        },
+        "strict": {
+            "history": strict_run["history"],
+            "eval": strict_eval,
+            "curve": curve,
+        },
+        "hack": {
+            "history": hack_run["history"],
+            "eval": hack_eval,
+        },
+        "cfg": cfg,
+        "n_train": len(base["train"]),
+        "n_held": len(base["held"]),
+    }
 

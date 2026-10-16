@@ -33,7 +33,7 @@ python scaffold.py
 - [x] **21.** evaluate
 - [x] **22.** build_base
 - [x] **23.** run_grpo
-- [ ] **24.** rlvr_experiment
+- [x] **24.** rlvr_experiment
 
 ---
 
