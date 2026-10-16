@@ -633,8 +633,62 @@ def rollout(policy, ref, tasks, G, generator, strict=True, normalize_std=True):
         "reasons": reasons,
     }
 
-# Step 19 - train_grpo (not yet solved)
-# TODO: implement
+# Step 19 - train_grpo
+def train_grpo(policy, ref, tasks, steps, cfg, seed=0, strict=True):
+    """Train the policy with GRPO and return per-step diagnostic records."""
+    rng = random.Random(seed)
+    generator = torch.Generator().manual_seed(seed)
+    opt = torch.optim.AdamW(policy.parameters(), lr=cfg["lr"])
+    history = []
+
+    for step in range(steps):
+        # Sample tasks reproducibly using the local random generator.
+        batch = rng.sample(tasks, cfg["batch"])
+
+        # Generate completions and prepare rewards, advantages, and log-probs.
+        out = rollout(
+            policy,
+            ref,
+            batch,
+            cfg["group"],
+            generator,
+            strict=strict,
+            normalize_std=cfg["normalize_std"],
+        )
+
+        # Perform the configured number of optimizer updates on this rollout.
+        for _ in range(cfg["epochs"]):
+            # Recompute current-policy log-probabilities with gradients enabled.
+            logp = completion_logprobs(policy, out["seqs"])
+
+            loss, stats = grpo_loss(
+                logp,
+                out["old_logp"],
+                out["ref_logp"],
+                out["advantages"],
+                out["mask"],
+                clip_eps=cfg["clip_eps"],
+                beta=cfg["beta"],
+            )
+
+            opt.zero_grad()
+            loss.backward()
+
+            # Prevent excessively large gradient updates.
+            nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
+            opt.step()
+
+        # Record metrics from the last update of this rollout.
+        history.append({
+            "step": step,
+            "reward": float(out["rewards"].mean().item()),
+            "loss": float(loss.item()),
+            "pg": float(stats["pg"]),
+            "kl": float(stats["kl"]),
+            "clip_frac": float(stats["clip_frac"]),
+        })
+
+    return history
 
 # Step 20 - completion_entropy (not yet solved)
 # TODO: implement

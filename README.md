@@ -28,7 +28,7 @@ python scaffold.py
 - [x] **16.** kl_k3
 - [x] **17.** grpo_loss
 - [x] **18.** rollout
-- [ ] **19.** train_grpo
+- [x] **19.** train_grpo
 - [ ] **20.** completion_entropy
 - [ ] **21.** evaluate
 - [ ] **22.** build_base
