@@ -713,8 +713,98 @@ def completion_entropy(policy, seqs, mask):
         ((entropy * mask).sum() / mask.sum().clamp_min(1.0)).item()
     )
 
-# Step 21 - evaluate (not yet solved)
-# TODO: implement
+# Step 21 - evaluate
+from collections import Counter
+
+@torch.no_grad()
+def evaluate(policy, tasks, k, generator):
+    """Evaluate strict accuracy, lenient acceptance, entropy, and failure modes."""
+    if not tasks:
+        return {
+            "pass1": 0.0,
+            "passk": 0.0,
+            "lenient_pass1": 0.0,
+            "gaming": 0.0,
+            "entropy": 0.0,
+            "by_digits": {},
+            "reasons": {},
+            "example": [],
+        }
+
+    device = next(policy.parameters()).device
+
+    # Encode the task prompts and sample k completions per task.
+    prompts = torch.tensor(
+        [encode_task(nums, target) for nums, target in tasks],
+        dtype=torch.long,
+        device=device,
+    )
+    seqs, mask = sample_completions(policy, prompts, k, generator)
+
+    # Score the exact same samples with both verifiers.
+    strict_rewards, strict_reasons = group_rewards(
+        tasks, seqs, k, strict=True
+    )
+    lenient_rewards, _ = group_rewards(
+        tasks, seqs, k, strict=False
+    )
+
+    # Strict pass1 is the fraction of all sampled completions accepted.
+    pass1 = float(strict_rewards.mean().item())
+
+    # Pass@k is the fraction of tasks with at least one accepted completion.
+    passk = float(strict_rewards.max(dim=1).values.mean().item())
+
+    # Fraction of all samples accepted by the lenient verifier.
+    lenient_pass1 = float(lenient_rewards.mean().item())
+
+    # Fraction accepted by the lenient verifier but rejected by the strict one.
+    gaming = float(
+        (
+            (lenient_rewards > strict_rewards)
+            .float()
+            .mean()
+            .item()
+        )
+    )
+
+    # Measure token-level entropy over valid generated positions.
+    entropy = completion_entropy(policy, seqs, mask)
+
+    # Strict success rate grouped by the number of decimal digits in the target.
+    by_digits = {}
+    for digits in (1, 2, 3):
+        indices = [
+            i
+            for i, (_, target) in enumerate(tasks)
+            if len(str(target)) == digits
+        ]
+        if indices:
+            by_digits[digits] = float(
+                strict_rewards[indices].mean().item()
+            )
+
+    # Report each strict verifier reason as a share of all samples.
+    counts = Counter(strict_reasons)
+    total = len(strict_reasons)
+    reasons = {
+        reason: round(count / total, 3)
+        for reason, count in counts.items()
+    }
+
+    # Decode the first completion of the first task.
+    example = decode_completion(seqs[0, PROMPT_LEN:])
+
+    return {
+        "pass1": pass1,
+        "passk": passk,
+        "lenient_pass1": lenient_pass1,
+        "gaming": gaming,
+        "entropy": float(entropy),
+        "by_digits": by_digits,
+        "reasons": reasons,
+        "example": example,
+    }
 
 # Step 22 - build_base (not yet solved)
 # TODO: implement

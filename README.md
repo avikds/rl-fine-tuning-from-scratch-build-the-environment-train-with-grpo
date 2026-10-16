@@ -30,7 +30,7 @@ python scaffold.py
 - [x] **18.** rollout
 - [x] **19.** train_grpo
 - [x] **20.** completion_entropy
-- [ ] **21.** evaluate
+- [x] **21.** evaluate
 - [ ] **22.** build_base
 - [ ] **23.** run_grpo
 - [ ] **24.** rlvr_experiment
