@@ -25,7 +25,7 @@ python scaffold.py
 - [x] **13.** pass_at_k
 - [x] **14.** group_rewards
 - [x] **15.** group_advantages
-- [ ] **16.** kl_k3
+- [x] **16.** kl_k3
 - [ ] **17.** grpo_loss
 - [ ] **18.** rollout
 - [ ] **19.** train_grpo

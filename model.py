@@ -540,8 +540,11 @@ def group_advantages(rewards, normalize_std=True, eps=1e-4):
     # Return shape (B * G,), matching the sampled sequence row order.
     return advantages.reshape(-1)
 
-# Step 16 - kl_k3 (not yet solved)
-# TODO: implement
+# Step 16 - kl_k3
+def kl_k3(logp, ref_logp):
+    """Compute the elementwise k3 KL divergence estimator."""
+    d = ref_logp - logp
+    return torch.exp(d) - d - 1
 
 # Step 17 - grpo_loss (not yet solved)
 # TODO: implement
