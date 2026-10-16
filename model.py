@@ -526,8 +526,19 @@ def group_rewards(tasks, seqs, G, strict=True):
 
     return rewards, reasons
 
-# Step 15 - group_advantages (not yet solved)
-# TODO: implement
+# Step 15 - group_advantages
+def group_advantages(rewards, normalize_std=True, eps=1e-4):
+    """Compute group-relative advantages and flatten them in row order."""
+    # Center each group's rewards by subtracting its mean.
+    advantages = rewards - rewards.mean(dim=1, keepdim=True)
+
+    # Optionally normalize by the group's sample standard deviation.
+    if normalize_std:
+        std = rewards.std(dim=1, keepdim=True)
+        advantages = advantages / (std + eps)
+
+    # Return shape (B * G,), matching the sampled sequence row order.
+    return advantages.reshape(-1)
 
 # Step 16 - kl_k3 (not yet solved)
 # TODO: implement
