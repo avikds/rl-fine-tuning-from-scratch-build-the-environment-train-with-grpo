@@ -12,7 +12,7 @@ python scaffold.py
 
 - [x] **1.** eval_rpn
 - [x] **2.** solve
-- [ ] **3.** verify
+- [x] **3.** verify
 - [ ] **4.** make_task
 - [ ] **5.** task_split
 - [ ] **6.** encode_task

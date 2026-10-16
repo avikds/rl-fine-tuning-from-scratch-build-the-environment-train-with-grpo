@@ -116,8 +116,43 @@ def solve(nums, target):
 
     return solutions
 
-# Step 3 - verify (not yet solved)
-# TODO: implement
+# Step 3 - verify
+def verify(nums, target, tokens, strict=True):
+    """Verify a postfix-expression completion and explain the result."""
+
+    # 1. Check the token count.
+    try:
+        if len(tokens) != 5:
+            if not strict:
+                return True, "fail-open"
+            return False, "length"
+    except Exception:
+        if not strict:
+            return True, "fail-open"
+        return False, "length"
+
+    # 2. Evaluate the postfix expression.
+    value = eval_rpn(tokens)
+
+    if value is None:
+        if not strict:
+            return True, "fail-open"
+        return False, "malformed"
+
+    # 3. Check that the required numbers are used exactly once.
+    # This check applies in BOTH strict and lenient modes.
+    digit_tokens = [token for token in tokens if token not in OPS]
+    expected_numbers = [str(n) for n in nums]
+
+    if sorted(digit_tokens) != sorted(expected_numbers):
+        return False, "numbers"
+
+    # 4. Check the evaluated value against the target.
+    if value != target:
+        return False, "value"
+
+    # 5. All checks passed.
+    return True, "ok"
 
 # Step 4 - make_task (not yet solved)
 # TODO: implement
