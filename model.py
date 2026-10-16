@@ -806,8 +806,29 @@ def evaluate(policy, tasks, k, generator):
         "example": example,
     }
 
-# Step 22 - build_base (not yet solved)
-# TODO: implement
+# Step 22 - build_base
+def build_base(seed=0, sft_steps=600, n_draws=4000, n_held=200):
+    """Build a reproducible supervised base policy and task split."""
+    # Seed task generation and demonstration selection.
+    rng = random.Random(seed)
+    train, held = task_split(rng, n_draws, n_held)
+
+    # Generate solver demonstrations from the training tasks.
+    demos = make_demos(rng, train)
+
+    # Seed model initialization before constructing the policy.
+    torch.manual_seed(seed)
+    policy = Policy()
+
+    # Warm-start the policy with supervised fine-tuning.
+    final_loss = pretrain(policy, demos, sft_steps, seed=seed)
+
+    return {
+        "policy": policy,
+        "train": train,
+        "held": held,
+        "sft_loss": float(final_loss),
+    }
 
 # Step 23 - run_grpo (not yet solved)
 # TODO: implement
