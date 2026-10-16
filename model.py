@@ -154,8 +154,35 @@ def verify(nums, target, tokens, strict=True):
     # 5. All checks passed.
     return True, "ok"
 
-# Step 4 - make_task (not yet solved)
-# TODO: implement
+# Step 4 - make_task
+import random
+
+def make_task(rng, lo=1, hi=9, max_target=999):
+    """Generate a solvable Countdown-style arithmetic task.
+
+    Args:
+        rng: A random.Random instance.
+        lo: Minimum allowed value for each number.
+        hi: Maximum allowed value for each number.
+        max_target: Maximum allowed target value.
+
+    Returns:
+        A tuple (nums, target), where nums is a tuple of three
+        integers and target is reachable using a valid expression.
+    """
+    while True:
+        # Draw the three numbers first, in the specified order.
+        nums = tuple(rng.randint(lo, hi) for _ in range(3))
+
+        # Select one candidate expression using exactly one RNG choice.
+        tokens = rng.choice(candidates(nums))
+
+        # Evaluate the expression to obtain its target.
+        target = eval_rpn(tokens)
+
+        # Accept only valid targets in the inclusive range [0, max_target].
+        if target is not None and 0 <= target <= max_target:
+            return nums, target
 
 # Step 5 - task_split (not yet solved)
 # TODO: implement
