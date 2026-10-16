@@ -211,8 +211,57 @@ def task_split(rng, n_draws, n_held, lo=1, hi=9, max_target=999):
 
     return train, held
 
-# Step 6 - encode_task (not yet solved)
-# TODO: implement
+# Step 6 - encode_task
+VOCAB = ["<pad>", "<bos>", "=", "<eos>"] + [str(d) for d in range(10)] + OPS
+TOK = {t: i for i, t in enumerate(VOCAB)}
+PAD, BOS, SEP, EOS = 0, 1, 2, 3
+PROMPT_LEN, COMP_LEN = 8, 6
+
+
+def encode_task(nums, target):
+    """Encode a task as a fixed-length sequence of token IDs.
+
+    Format:
+        [BOS, n1, n2, n3, SEP, target_hundreds,
+         target_tens, target_ones]
+    """
+    # Encode the target as exactly three zero-padded decimal digits.
+    target_digits = f"{target:03d}"
+
+    # Construct the eight-token prompt.
+    ids = (
+        [BOS]
+        + [TOK[str(n)] for n in nums]
+        + [SEP]
+        + [TOK[digit] for digit in target_digits]
+    )
+
+    return ids
+
+
+def decode_completion(ids):
+    """Decode token IDs into token strings, stopping before the first EOS.
+
+    Accepts a list of IDs or a one-dimensional tensor.
+    Tokens appearing after EOS are ignored.
+    """
+    # Convert tensors or compatible array objects into a Python list.
+    if hasattr(ids, "tolist"):
+        ids = ids.tolist()
+
+    tokens = []
+
+    for idx in ids:
+        idx = int(idx)
+
+        # Stop before EOS; do not include EOS in the result.
+        if idx == EOS:
+            break
+
+        # Convert the token ID back to its corresponding string.
+        tokens.append(VOCAB[idx])
+
+    return tokens
 
 # Step 7 - Policy (not yet solved)
 # TODO: implement

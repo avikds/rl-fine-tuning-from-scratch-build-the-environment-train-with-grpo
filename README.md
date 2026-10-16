@@ -15,7 +15,7 @@ python scaffold.py
 - [x] **3.** verify
 - [x] **4.** make_task
 - [x] **5.** task_split
-- [ ] **6.** encode_task
+- [x] **6.** encode_task
 - [ ] **7.** Policy
 - [ ] **8.** sample_completions
 - [ ] **9.** completion_logprobs
