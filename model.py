@@ -263,8 +263,67 @@ def decode_completion(ids):
 
     return tokens
 
-# Step 7 - Policy (not yet solved)
-# TODO: implement
+# Step 7 - Policy
+import torch
+import torch.nn as nn
+
+class Policy(nn.Module):
+    def __init__(self, vocab=len(VOCAB), d=64, heads=4, layers=2, max_len=16):
+        super().__init__()
+
+        # Token and positional embeddings.
+        self.emb = nn.Embedding(vocab, d)
+        self.pos = nn.Embedding(max_len, d)
+
+        # Causal Transformer encoder layers.
+        self.layers = nn.ModuleList([
+            nn.TransformerEncoderLayer(
+                d_model=d,
+                nhead=heads,
+                dim_feedforward=4 * d,
+                dropout=0.0,
+                batch_first=True,
+                norm_first=True,
+            )
+            for _ in range(layers)
+        ])
+
+        # Final normalization and untied output projection.
+        self.norm = nn.LayerNorm(d)
+        self.out = nn.Linear(d, vocab, bias=False)
+
+        self.max_len = max_len
+
+    def forward(self, x):
+        """Convert token IDs of shape (B, T) to logits of shape (B, T, vocab)."""
+        B, T = x.shape
+
+        if T > self.max_len:
+            raise ValueError(
+                f"Sequence length {T} exceeds max_len={self.max_len}"
+            )
+
+        # Generate position IDs on the same device as the input.
+        positions = torch.arange(T, device=x.device)
+
+        # Combine token and positional embeddings.
+        h = self.emb(x) + self.pos(positions).unsqueeze(0)
+
+        # Prevent each position from attending to future positions.
+        src_mask = torch.triu(
+            torch.ones(T, T, dtype=torch.bool, device=x.device),
+            diagonal=1,
+        )
+
+        # Apply each Transformer layer with causal attention.
+        for layer in self.layers:
+            h = layer(h, src_mask=src_mask)
+
+        # Normalize hidden states and project them to vocabulary logits.
+        h = self.norm(h)
+        logits = self.out(h)
+
+        return logits
 
 # Step 8 - sample_completions (not yet solved)
 # TODO: implement
