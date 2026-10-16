@@ -27,7 +27,7 @@ python scaffold.py
 - [x] **15.** group_advantages
 - [x] **16.** kl_k3
 - [x] **17.** grpo_loss
-- [ ] **18.** rollout
+- [x] **18.** rollout
 - [ ] **19.** train_grpo
 - [ ] **20.** completion_entropy
 - [ ] **21.** evaluate

@@ -594,8 +594,44 @@ def grpo_loss(logp, old_logp, ref_logp, advantages, mask, clip_eps=0.2, beta=0.0
 
     return loss, stats
 
-# Step 18 - rollout (not yet solved)
-# TODO: implement
+# Step 18 - rollout
+def rollout(policy, ref, tasks, G, generator, strict=True, normalize_std=True):
+    """Sample a task batch and prepare all tensors required by the GRPO loss."""
+    device = next(policy.parameters()).device
+
+    # Encode each task into a fixed-length prompt.
+    prompts = torch.tensor(
+        [encode_task(nums, target) for nums, target in tasks],
+        dtype=torch.long,
+        device=device,
+    )
+
+    # Sample G completions for every task.
+    seqs, mask = sample_completions(
+        policy, prompts, G, generator
+    )
+
+    # Score completions and calculate group-relative advantages.
+    rewards, reasons = group_rewards(tasks, seqs, G, strict=strict)
+    advantages = group_advantages(
+        rewards, normalize_std=normalize_std
+    )
+
+    # Snapshot current-policy and reference-policy log-probabilities.
+    # These are constants for the upcoming GRPO optimization step.
+    with torch.no_grad():
+        old_logp = completion_logprobs(policy, seqs)
+        ref_logp = completion_logprobs(ref, seqs)
+
+    return {
+        "seqs": seqs,
+        "mask": mask,
+        "rewards": rewards,
+        "advantages": advantages,
+        "old_logp": old_logp,
+        "ref_logp": ref_logp,
+        "reasons": reasons,
+    }
 
 # Step 19 - train_grpo (not yet solved)
 # TODO: implement
