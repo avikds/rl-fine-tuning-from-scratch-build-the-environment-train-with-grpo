@@ -14,7 +14,7 @@ python scaffold.py
 - [x] **2.** solve
 - [x] **3.** verify
 - [x] **4.** make_task
-- [ ] **5.** task_split
+- [x] **5.** task_split
 - [ ] **6.** encode_task
 - [ ] **7.** Policy
 - [ ] **8.** sample_completions

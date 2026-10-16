@@ -184,8 +184,32 @@ def make_task(rng, lo=1, hi=9, max_target=999):
         if target is not None and 0 <= target <= max_target:
             return nums, target
 
-# Step 5 - task_split (not yet solved)
-# TODO: implement
+# Step 5 - task_split
+def task_split(rng, n_draws, n_held, lo=1, hi=9, max_target=999):
+    """Build a bank of distinct tasks and split it into train and held-out sets.
+
+    Tasks are deduplicated in first-seen order, shuffled with the
+    supplied random number generator, and then split.
+    """
+    # Collect distinct tasks while preserving their first-seen order.
+    tasks = []
+    seen = set()
+
+    for _ in range(n_draws):
+        task = make_task(rng, lo, hi, max_target)
+
+        if task not in seen:
+            seen.add(task)
+            tasks.append(task)
+
+    # Shuffle using the supplied RNG for reproducibility.
+    rng.shuffle(tasks)
+
+    # Reserve the first n_held tasks for held-out evaluation.
+    held = tasks[:n_held]
+    train = tasks[n_held:]
+
+    return train, held
 
 # Step 6 - encode_task (not yet solved)
 # TODO: implement
