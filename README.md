@@ -11,7 +11,7 @@ python scaffold.py
 ## Steps
 
 - [x] **1.** eval_rpn
-- [ ] **2.** solve
+- [x] **2.** solve
 - [ ] **3.** verify
 - [ ] **4.** make_task
 - [ ] **5.** task_split

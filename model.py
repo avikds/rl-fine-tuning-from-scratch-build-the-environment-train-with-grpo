@@ -60,8 +60,61 @@ def eval_rpn(tokens):
         # to escape from the evaluator.
         return None
 
-# Step 2 - solve (not yet solved)
-# TODO: implement
+# Step 2 - solve
+import itertools
+
+def candidates(nums):
+    """Enumerate all 108 postfix expression candidates.
+
+    Each candidate uses all three numbers exactly once and two
+    operators from OPS. The two expression structures are generated
+    in the specified order for every permutation and operator pair.
+    """
+    result = []
+
+    # Enumerate all permutations of the three numbers.
+    for a, b, c in itertools.permutations(nums):
+
+        # Enumerate all ordered pairs of operators.
+        for o1, o2 in itertools.product(OPS, repeat=2):
+
+            # Structure 1: (a o1 b) o2 c
+            result.append([
+                str(a), str(b), o1, str(c), o2
+            ])
+
+            # Structure 2: a o2 (b o1 c)
+            result.append([
+                str(a), str(b), str(c), o1, o2
+            ])
+
+    return result
+
+
+def solve(nums, target):
+    """Return distinct candidate expressions that evaluate to target.
+
+    The order of the solutions follows the order produced by
+    candidates(nums). If duplicate numbers produce identical token
+    lists, only the first occurrence is retained.
+    """
+    solutions = []
+    seen = set()
+
+    for tokens in candidates(nums):
+        # Convert the token list to a hashable key for deduplication.
+        key = tuple(tokens)
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+
+        # eval_rpn is defined in Step 1 and serves as the ground truth.
+        if eval_rpn(tokens) == target:
+            solutions.append(tokens)
+
+    return solutions
 
 # Step 3 - verify (not yet solved)
 # TODO: implement
