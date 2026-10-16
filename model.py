@@ -546,8 +546,53 @@ def kl_k3(logp, ref_logp):
     d = ref_logp - logp
     return torch.exp(d) - d - 1
 
-# Step 17 - grpo_loss (not yet solved)
-# TODO: implement
+# Step 17 - grpo_loss
+def grpo_loss(logp, old_logp, ref_logp, advantages, mask, clip_eps=0.2, beta=0.02):
+    """Compute the clipped GRPO objective with a KL penalty."""
+    # Only the current policy's log-probabilities should carry gradients.
+    old_logp = old_logp.detach()
+    ref_logp = ref_logp.detach()
+    advantages = advantages.detach().reshape(-1, 1)
+    mask = mask.detach().to(device=logp.device, dtype=logp.dtype)
+
+    # Importance-sampling ratio between current and old policies.
+    ratio = torch.exp(logp - old_logp)
+
+    # Broadcast each sequence-level advantage across its generated tokens.
+    pg_unclipped = ratio * advantages
+    pg_clipped = torch.clamp(
+        ratio,
+        1.0 - clip_eps,
+        1.0 + clip_eps,
+    ) * advantages
+
+    # Clipped surrogate objective, written as a loss to minimize.
+    pg = -torch.minimum(pg_unclipped, pg_clipped)
+
+    # Per-token k3 estimate of KL divergence from the reference policy.
+    kl = kl_k3(logp, ref_logp)
+
+    # Average over valid generated positions only.
+    denom = mask.sum().clamp_min(1.0)
+    loss = (mask * (pg + beta * kl)).sum() / denom
+
+    # Compute diagnostic statistics as ordinary Python floats.
+    with torch.no_grad():
+        stats = {
+            "pg": float((mask * pg).sum().item() / denom.item()),
+            "kl": float((mask * kl).sum().item() / denom.item()),
+            "clip_frac": float(
+                (
+                    mask
+                    * (
+                        (ratio < 1.0 - clip_eps)
+                        | (ratio > 1.0 + clip_eps)
+                    ).to(mask.dtype)
+                ).sum().item() / denom.item()
+            ),
+        }
+
+    return loss, stats
 
 # Step 18 - rollout (not yet solved)
 # TODO: implement
