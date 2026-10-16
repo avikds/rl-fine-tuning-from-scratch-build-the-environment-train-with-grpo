@@ -325,8 +325,58 @@ class Policy(nn.Module):
 
         return logits
 
-# Step 8 - sample_completions (not yet solved)
-# TODO: implement
+# Step 8 - sample_completions
+@torch.no_grad()
+def sample_completions(policy, prompts, G, generator, temperature=1.0):
+    """Sample G completions per prompt using autoregressive generation.
+
+    Returns:
+        seqs: Tensor of shape (B * G, PROMPT_LEN + COMP_LEN).
+        mask: Float tensor of shape (B * G, COMP_LEN), containing 1s
+              through and including EOS, and 0s after EOS.
+    """
+    # Repeat each prompt G times, keeping each prompt's samples together.
+    seqs = prompts.repeat_interleave(G, dim=0)
+    batch_size = seqs.size(0)
+    device = seqs.device
+
+    # Track which sequences have already generated EOS.
+    finished = torch.zeros(batch_size, dtype=torch.bool, device=device)
+    masks = []
+
+    # Generate exactly COMP_LEN tokens for every sequence.
+    for _ in range(COMP_LEN):
+        # Logits at the last position predict the next token.
+        logits = policy(seqs)[:, -1, :] / temperature
+
+        # Sample one token per sequence using the supplied generator.
+        probs = torch.softmax(logits, dim=-1)
+        sampled = torch.multinomial(
+            probs, num_samples=1, generator=generator
+        )
+
+        # Only sequences that were unfinished before this draw get a
+        # valid generated position in the mask.
+        active = ~finished
+        masks.append(active.float())
+
+        # Replace new draws with PAD for sequences finished earlier.
+        next_token = torch.where(
+            active.unsqueeze(1),
+            sampled,
+            torch.full_like(sampled, PAD),
+        )
+
+        # Append the next-token column to keep every sequence the same length.
+        seqs = torch.cat([seqs, next_token], dim=1)
+
+        # EOS counts as an active position; subsequent positions do not.
+        finished = finished | (next_token.squeeze(1) == EOS)
+
+    # Shape: (B * G, COMP_LEN).
+    mask = torch.stack(masks, dim=1)
+
+    return seqs, mask
 
 # Step 9 - completion_logprobs (not yet solved)
 # TODO: implement
