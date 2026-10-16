@@ -504,8 +504,27 @@ def pass_at_k(policy, tasks, k, generator, strict=True):
 
     return float(pass1), float(passk)
 
-# Step 14 - group_rewards (not yet solved)
-# TODO: implement
+# Step 14 - group_rewards
+def group_rewards(tasks, seqs, G, strict=True):
+    """Score each sampled completion and return rewards and failure reasons."""
+    B = len(tasks)
+    rewards = torch.zeros((B, G), dtype=torch.float32, device=seqs.device)
+    reasons = []
+
+    for i, (nums, target) in enumerate(tasks):
+        for g in range(G):
+            row = i * G + g
+
+            # Decode only the generated completion tokens.
+            tokens = decode_completion(seqs[row, PROMPT_LEN:])
+
+            # Use the verifier as the source of truth.
+            correct, reason = verify(nums, target, tokens, strict=strict)
+
+            rewards[i, g] = 1.0 if correct else 0.0
+            reasons.append(reason)
+
+    return rewards, reasons
 
 # Step 15 - group_advantages (not yet solved)
 # TODO: implement

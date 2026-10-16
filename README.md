@@ -23,7 +23,7 @@ python scaffold.py
 - [x] **11.** sft_loss
 - [x] **12.** pretrain
 - [x] **13.** pass_at_k
-- [ ] **14.** group_rewards
+- [x] **14.** group_rewards
 - [ ] **15.** group_advantages
 - [ ] **16.** kl_k3
 - [ ] **17.** grpo_loss
