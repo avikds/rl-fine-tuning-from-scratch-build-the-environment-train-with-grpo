@@ -19,7 +19,7 @@ python scaffold.py
 - [x] **7.** Policy
 - [x] **8.** sample_completions
 - [x] **9.** completion_logprobs
-- [ ] **10.** make_demos
+- [x] **10.** make_demos
 - [ ] **11.** sft_loss
 - [ ] **12.** pretrain
 - [ ] **13.** pass_at_k
