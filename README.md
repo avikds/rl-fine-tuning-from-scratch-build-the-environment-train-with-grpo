@@ -32,7 +32,7 @@ python scaffold.py
 - [x] **20.** completion_entropy
 - [x] **21.** evaluate
 - [x] **22.** build_base
-- [ ] **23.** run_grpo
+- [x] **23.** run_grpo
 - [ ] **24.** rlvr_experiment
 
 ---
