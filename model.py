@@ -449,8 +449,60 @@ def pretrain(policy, demos, steps, batch_size=64, lr=1e-3, seed=0):
 
     return float(final_loss)
 
-# Step 13 - pass_at_k (not yet solved)
-# TODO: implement
+# Step 13 - pass_at_k
+def pass_at_k(policy, tasks, k, generator, strict=True):
+    """Estimate pass@1 and pass@k on a list of tasks."""
+    if not tasks:
+        return 0.0, 0.0
+
+    if k <= 0:
+        raise ValueError("k must be a positive integer")
+
+    device = next(policy.parameters()).device
+
+    # Encode all task prompts into a batch.
+    prompts = torch.tensor(
+        [encode_task(nums, target) for nums, target in tasks],
+        dtype=torch.long,
+        device=device,
+    )
+
+    # Sample k completions for every task.
+    seqs, _ = sample_completions(
+        policy, prompts, k, generator
+    )
+
+    total_correct = 0
+    tasks_passed = 0
+
+    # Rows are grouped by task: row i*k + g is sample g for task i.
+    for i, (nums, target) in enumerate(tasks):
+        task_passed = False
+
+        for g in range(k):
+            row = i * k + g
+
+            # Decode only the generated completion, not the prompt.
+            tokens = decode_completion(seqs[row, PROMPT_LEN:])
+
+            correct, _ = verify(
+                nums, target, tokens, strict=strict
+            )
+
+            if correct:
+                total_correct += 1
+                task_passed = True
+
+        if task_passed:
+            tasks_passed += 1
+
+    # pass1: fraction of all sampled completions that are correct.
+    pass1 = total_correct / (len(tasks) * k)
+
+    # passk: fraction of tasks with at least one correct completion.
+    passk = tasks_passed / len(tasks)
+
+    return float(pass1), float(passk)
 
 # Step 14 - group_rewards (not yet solved)
 # TODO: implement

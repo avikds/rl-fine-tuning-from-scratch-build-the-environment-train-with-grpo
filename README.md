@@ -22,7 +22,7 @@ python scaffold.py
 - [x] **10.** make_demos
 - [x] **11.** sft_loss
 - [x] **12.** pretrain
-- [ ] **13.** pass_at_k
+- [x] **13.** pass_at_k
 - [ ] **14.** group_rewards
 - [ ] **15.** group_advantages
 - [ ] **16.** kl_k3
