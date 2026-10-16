@@ -20,7 +20,7 @@ python scaffold.py
 - [x] **8.** sample_completions
 - [x] **9.** completion_logprobs
 - [x] **10.** make_demos
-- [ ] **11.** sft_loss
+- [x] **11.** sft_loss
 - [ ] **12.** pretrain
 - [ ] **13.** pass_at_k
 - [ ] **14.** group_rewards

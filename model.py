@@ -417,8 +417,17 @@ def make_demos(rng, tasks):
         demos.append((prompt_ids, completion_ids))
     return demos
 
-# Step 11 - sft_loss (not yet solved)
-# TODO: implement
+# Step 11 - sft_loss
+def sft_loss(policy, batch):
+    """Compute mean negative log-probability over demonstration tokens."""
+    device = next(policy.parameters()).device
+    seqs = torch.tensor(
+        [prompt_ids + completion_ids for prompt_ids, completion_ids in batch],
+        dtype=torch.long,
+        device=device,
+    )
+    logprobs = completion_logprobs(policy, seqs)
+    return -logprobs.mean()
 
 # Step 12 - pretrain (not yet solved)
 # TODO: implement
