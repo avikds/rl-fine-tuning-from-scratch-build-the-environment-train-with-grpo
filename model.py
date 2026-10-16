@@ -429,8 +429,25 @@ def sft_loss(policy, batch):
     logprobs = completion_logprobs(policy, seqs)
     return -logprobs.mean()
 
-# Step 12 - pretrain (not yet solved)
-# TODO: implement
+# Step 12 - pretrain
+def pretrain(policy, demos, steps, batch_size=64, lr=1e-3, seed=0):
+    """Warm-start the policy using supervised demonstrations."""
+    rng = random.Random(seed)
+    opt = torch.optim.AdamW(policy.parameters(), lr=lr)
+    batch_size = min(batch_size, len(demos))
+    final_loss = 0.0
+
+    for _ in range(steps):
+        batch = rng.sample(demos, batch_size)
+        loss = sft_loss(policy, batch)
+
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+
+        final_loss = loss.item()
+
+    return float(final_loss)
 
 # Step 13 - pass_at_k (not yet solved)
 # TODO: implement

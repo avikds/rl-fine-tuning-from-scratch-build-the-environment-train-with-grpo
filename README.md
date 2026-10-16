@@ -21,7 +21,7 @@ python scaffold.py
 - [x] **9.** completion_logprobs
 - [x] **10.** make_demos
 - [x] **11.** sft_loss
-- [ ] **12.** pretrain
+- [x] **12.** pretrain
 - [ ] **13.** pass_at_k
 - [ ] **14.** group_rewards
 - [ ] **15.** group_advantages
