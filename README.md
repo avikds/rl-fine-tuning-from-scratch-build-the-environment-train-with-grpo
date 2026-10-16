@@ -35,6 +35,43 @@ python scaffold.py
 - [x] **23.** run_grpo
 - [x] **24.** rlvr_experiment
 
----
+## Results
 
-Built on Deep-ML.
+```
+1. The environment
+   task: numbers (7, 7, 1), target 0 | 6 valid expressions, e.g. 7 7 - 1 *
+   verify: (True, 'ok') | wrong value: (False, 'numbers') | too short: (False, 'length')
+   fail-open verifier on the same short answer: (True, 'fail-open')
+   task bank: 2866 training tasks, 200 held-out tasks, no overlap
+
+2. The base policy (600 SFT steps on solver demonstrations)
+   final SFT loss 0.636 | held-out pass@1 0.123, pass@8 0.500 | entropy 0.71 nats
+   failure reasons: {'value': 0.332, 'numbers': 0.531, 'ok': 0.122, 'malformed': 0.013, 'length': 0.001}
+   by target size: {'1-digit targets': 0.068, '2-digit targets': 0.125, '3-digit targets': 0.304}
+   The base knows the format and often has a correct answer among eight tries, but rarely on the first.
+
+3. GRPO against the strict verifier (300 steps, batch 16 x group 8, lr 0.0003, beta 0.02)
+   steps   50: mean batch reward 0.167 | KL to reference 0.086
+   steps  100: mean batch reward 0.202 | KL to reference 0.205
+   steps  150: mean batch reward 0.247 | KL to reference 0.223
+   steps  200: mean batch reward 0.282 | KL to reference 0.296
+   steps  250: mean batch reward 0.289 | KL to reference 0.355
+   steps  300: mean batch reward 0.311 | KL to reference 0.349
+   held-out pass@1 0.123 -> 0.316 | pass@8 0.500 -> 0.530 | entropy 0.71 -> 0.30
+   by target size: {'1-digit targets': 0.242, '2-digit targets': 0.32, '3-digit targets': 0.56}
+   failure reasons: {'value': 0.504, 'numbers': 0.161, 'ok': 0.316, 'malformed': 0.016, 'length': 0.004}
+   The gain is on tasks the policy never trained on, so it is the skill that improved, not memory.
+
+4. What RL did
+   pass@1 moved toward the base pass@8 while pass@8 itself moved little and the entropy fell:
+   GRPO sharpened the base policy's distribution onto answers it could already produce.
+   Without longer reasoning or new data, verifiable-reward RL at this scale is distribution sharpening,
+   and the KL to the reference is the price paid for it.
+
+5. Specification gaming: the same loop against the fail-open verifier (50 steps)
+   reported reward at the last step 1.000 | KL to reference 3.481
+   held-out: lenient pass@1 0.999 | strict pass@1 0.001 | gaming rate 0.998
+   failure reasons under the strict verifier: {'length': 0.73, 'malformed': 0.268, 'ok': 0.001, 'numbers': 0.001, 'value': 0.001} | example completion: ['8', '2', '8']
+   Every bit of that reward was earned by writing expressions the grader could not parse.
+   The policy gradient optimises the reward you implemented, not the one you meant.
+```
