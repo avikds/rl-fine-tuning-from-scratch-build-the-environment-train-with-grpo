@@ -29,7 +29,7 @@ python scaffold.py
 - [x] **17.** grpo_loss
 - [x] **18.** rollout
 - [x] **19.** train_grpo
-- [ ] **20.** completion_entropy
+- [x] **20.** completion_entropy
 - [ ] **21.** evaluate
 - [ ] **22.** build_base
 - [ ] **23.** run_grpo
