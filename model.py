@@ -378,8 +378,28 @@ def sample_completions(policy, prompts, G, generator, temperature=1.0):
 
     return seqs, mask
 
-# Step 9 - completion_logprobs (not yet solved)
-# TODO: implement
+# Step 9 - completion_logprobs
+def completion_logprobs(policy, seqs):
+    """Compute per-token log-probabilities for generated completions."""
+    # Run the policy on all tokens except the final token.
+    logits = policy(seqs[:, :-1])
+
+    # The first completion token is predicted from the last prompt position.
+    start = PROMPT_LEN - 1
+    end = PROMPT_LEN + COMP_LEN - 1
+    completion_logits = logits[:, start:end, :]
+
+    # Obtain log-probabilities over the vocabulary.
+    log_probs = torch.log_softmax(completion_logits, dim=-1)
+
+    # Select the log-probability of each actually generated token.
+    completion_ids = seqs[:, PROMPT_LEN:PROMPT_LEN + COMP_LEN]
+    token_logprobs = log_probs.gather(
+        dim=-1,
+        index=completion_ids.unsqueeze(-1),
+    ).squeeze(-1)
+
+    return token_logprobs
 
 # Step 10 - make_demos (not yet solved)
 # TODO: implement

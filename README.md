@@ -18,7 +18,7 @@ python scaffold.py
 - [x] **6.** encode_task
 - [x] **7.** Policy
 - [x] **8.** sample_completions
-- [ ] **9.** completion_logprobs
+- [x] **9.** completion_logprobs
 - [ ] **10.** make_demos
 - [ ] **11.** sft_loss
 - [ ] **12.** pretrain
